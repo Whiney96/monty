@@ -1,66 +1,33 @@
 #include "monty.h"
 /**
- * _stack - sets the format of the data to a stack (LIFO). This is the default
- * @stack: Pointer To The Head
- * @line_number: Line Number
- * Return: Void
+ *push_use - Usage of push command error
  */
-void _stack(stack_t **stack, unsigned int line_number)
+void push_use(void)
 {
-	(void)stack;
-	(void)line_number;
-	info.type = LIFO;
-}
-
-/**
- * _queue - sets the format of the data to a queue (FIFO).
- * @stack: Pointer To The Head
- * @line_number: Line Number
- * Return: Void
- *
- * Return: None
- */
-void _queue(stack_t **stack, unsigned int line_number)
-{
-	(void)stack;
-	(void)line_number;
-	info.type = FIFO;
+	fprintf(stderr, "L%d: usage: push integer\n", info.l_number);
+	free_info();
 }
 /**
- * add_node_lifo - add lifo
- * @stack: head of stack
- * @n_node: the node to add
+ * pint_error - error when using pint command in empty stack
  */
-void add_node_lifo(stack_t **stack, stack_t *n_node)
+void pint_error(void)
 {
-	n_node->prev = NULL;
-	n_node->next = *stack;
-	if (*stack)
-		(*stack)->prev = n_node;
-	*stack = n_node;
+	fprintf(stderr, "L%d: can't pint, stack empty\n", info.l_number);
+	free_info();
 }
-
 /**
- * add_node_fifo - add node fifo
- * @stack: head of stack
- * @n_node: the node to add
+ * pop_error - error when stack is empty
  */
-void add_node_fifo(stack_t **stack, stack_t *n_node)
+void pop_error(void)
 {
-	stack_t *tmp = *stack;
-
-	n_node->next = NULL;
-	if (!*stack)
-	{
-		n_node->prev = NULL;
-		*stack = n_node;
-	}
-	else
-	{
-		while (tmp->next)
-			tmp = tmp->next;
-		tmp->next = n_node;
-		n_node->prev = tmp;
-	}
+	fprintf(stderr, "L%d: can't pop an empty stack\n", info.l_number);
+	free_info();
 }
-
+/**
+ * swap_error - error when the stack len less than 2
+ */
+void swap_error(void)
+{
+	fprintf(stderr, "L%d: can't swap, stack too short\n", info.l_number);
+	free_info();
+}
