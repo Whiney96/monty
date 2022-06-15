@@ -1,92 +1,108 @@
 #include "monty.h"
+info_t info;
 /**
- **_realloc -  Reallocates A Memory Block Using Malloc And Free
- *@ptr: Pointer
- *@old_size: Previous Size Of The Pointer
- *@new_size: New Size Of The Pointer
- *Return: Void Pointer Rellocated Memory
+ * treat_monty - Treat The Monty File
+ * @filename: Filename From Argument
+ * Return: Data Of The Monty File
  */
-void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size)
+int treat_monty(char *filename)
 {
-	void *result;
+	ssize_t n_r = 1;
+	size_t len = 0;
+	stack_t *stack = NULL;
 
-	if (new_size == old_size)
-		return (ptr);
-	if (new_size == 0 && ptr)
+	info.fn = filename;
+	info.fp = fopen(info.fn, "r");
+	if (info.fp == NULL)
+		handle_error(3);
+	while ((n_r = getline(&info.cmd, &len, info.fp)) > 0)
 	{
-		free(ptr);
-		return (NULL);
+		if (*info.cmd == '\n')
+			continue;
+		info.l_number++;
+		free(info.arg);
+		if (split() < 0)
+			continue;
+		if (info.arg == NULL)
+			continue;
+		excute_monty(&stack);
 	}
-	result = malloc(new_size);
-	if (result == NULL)
-		return (NULL);
-	if (ptr == NULL)
-	{
-		fill_an_array(result, '\0', new_size);
-		free(ptr);
-	}
-	else
-	{
-		_memcpy(result, ptr, old_size);
-		free(ptr);
-	}
-	return (result);
-
+	free_info();
+	free_list(stack);
+	return (0);
 }
 /**
- * _memcpy - Copy Byte From Source To Destination
- * @dest: Destination Pointer
- * @src: Source Pointer
- * @n: Size (How Much You Will Copy)
- *Return: Void Pointer
- */
-char *_memcpy(char *dest, char *src, unsigned int n)
-{
-	unsigned int i;
-
-	for (i = 0; i < n; i++)
-	{
-		dest[i] = src[i];
-	}
-	return (dest);
-}
-/**
- * fill_an_array - Fill An Array By Constant Byte
- * @a:Void Pointer
- * @el: Int
- * @len:Length Int
- *Return: Void Pointer
- */
-void *fill_an_array(void *a, int el, unsigned int len)
-{
-	char *p = a;
-	unsigned int i = 0;
-
-	while (i < len)
-	{
-		*p = el;
-		p++;
-		i++;
-	}
-	return (a);
-}
-/**
- * _isdigit - checks for a digit from 0 to 9
- * @str: the integer to be checked
+ * split - Split The Line Into Command and Arguments
  *
- * Return: 1 if is digit, 0 otherwise
+ *Return: 0 On Success 1 On Failure
  */
-int _isdigit(char *str)
+int split(void)
 {
+	char *token;
+	size_t bufsize = 20, i = 0;
+
+	info.arg = malloc(bufsize * sizeof(char *));
+	if (info.arg == NULL)
+		handle_error(1);
+	token = strtok(info.cmd, DELIMITER);
+	while (token)
+	{
+		info.arg[i++] = token;
+		if (i >= bufsize)
+		{
+			info.arg = _realloc(info.arg, bufsize, bufsize * 2);
+			if (info.arg == NULL)
+			{
+				handle_error(1);
+			}
+		}
+		token = strtok(NULL, DELIMITER);
+	}
+	info.arg[i] = NULL;
+	if (**info.arg == '#')
+		return (-1);
+	return (0);
+}
+#include "monty.h"
+/**
+ * excute_monty - Verifie Monty Command And Excute it
+ * @stack: Stack or Queue
+ * Return: 0 On Valid Command 1 On Commant Not Found
+ */
+int excute_monty(stack_t **stack)
+{
+	instruction_t command[] = {
+		{"push", push_monty},
+		{"pall", pall_monty},
+		{"pint", pint_monty},
+		{"pop", pop_monty},
+		{"swap", swap_monty},
+		{"add", add_monty},
+		{"nop", nop_monty},
+		{"sub", sub_monty},
+		{"div", div_monty},
+		{"mul", mul_monty},
+		{"mod", mod_monty},
+		{"#", nop_monty},
+		{"pchar", pchar_monty},
+		{"pstr", pstr_monty},
+		{"rotl", rotl_monty},
+		{"rotr", rotr_monty},
+		{"stack", _stack},
+		{"queue", _queue},
+		{NULL, NULL}
+	};
 	int i = 0;
 
-	if (str == NULL)
-		return (1);
-	while (str[i])
+	while ((command + i)->opcode)
 	{
-		if (isdigit(*str) == 0)
-			return (1);
+		if (strcmp((command + i)->opcode, *info.arg) == 0)
+		{
+			(command + i)->f(stack, info.l_number);
+			return (0);
+		}
 		i++;
 	}
-	return (0);
+	handle_error(4);
+	return (1);
 }
